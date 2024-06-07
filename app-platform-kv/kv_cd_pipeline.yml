@@ -1,0 +1,114 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: Kv
+    displayName: 'terrafomr plan for Keyvault'
+    jobs:
+      - job: kv_job
+        displayName: 'deploy Keyvault Job '
+        steps:
+          - task: TerraformInstaller@1
+            displayName: install terraform
+            inputs:
+              terraformVersion: latest
+
+          - task: TerraformCLI@0
+            displayName: 'terraform init'
+            inputs:
+              command: init
+              backendType: azurerm
+              # Service connection to authorize backend access. Supports Subscription & Management Group Scope
+              backendServiceArm: '27_11'
+              # Tenant id of the target backend. This can be used to override the default tenant id inherited from the service connection
+              backendAzureRmTenantId: '90f8a8f8-fcda-40f9'
+              # Subscription id of the target backend. This can be used to specify the subscription when using Management Group scoped
+              # Service connection or to override the subscription id defined in a Subscription scoped service connection
+              backendAzureRmSubscriptionId: '714bac87-66c7-4f7b-b'
+              # create backend storage account if doesn't exist
+              ensureBackend: true
+              backendAzureRmResourceGroupName: 'RGinfra-platform-rg-prod11'
+              # azure location shortname of the backend resource group and storage account
+              backendAzureRmResourceGroupLocation: 'uksouth'
+              backendAzureRmStorageAccountName: 'infratfstate12'
+              # azure storage account sku, used when creating the storage account
+              backendAzureRmStorageAccountSku: 'Standard_LRS'
+              # azure blob container to store the state file
+              backendAzureRmContainerName: 'tfstate'
+              # azure blob file name
+              backendAzureRmKey: kv.tfstate
+              workingDirectory: $(System.DefaultWorkingDirectory)/TerraformPractices/
+
+          - task: TerraformCLI@0
+            displayName: 'KV terraform plan'
+            inputs:
+              command: plan
+              environmentServiceName: '27_11:30_batch'
+              workingDirectory: $(System.DefaultWorkingDirectory)/TerraformPractices/
+
+
+  - stage: Kvapply
+    displayName: 'terrafomr apply for Keyvault'
+    jobs:
+      - deployment: kv_apply_job
+        displayName: 'tf apply Keyvault Job '
+        # Creates an environment if it doesn't exist.
+        environment: 'dev-bank'
+        strategy:
+          # Default deployment strategy, more coming...
+          runOnce:
+            deploy:
+              steps:
+                - task: TerraformInstaller@1
+                  displayName: install terraform
+                  inputs:
+                    terraformVersion: latest
+
+                - task: TerraformCLI@0
+                  displayName: 'terraform init'
+                  inputs:
+                    command: init
+                    backendType: azurerm
+                    # Service connection to authorize backend access. Supports Subscription & Management Group Scope
+                    backendServiceArm: '27_11:30_batch'
+                    # Tenant id of the target backend. This can be used to override the default tenant id inherited from the service connection
+                    backendAzureRmTenantId: '90f8a8f8-fcda-40f9-'
+                    # Subscription id of the target backend. This can be used to specify the subscription when using Management Group scoped
+                    # Service connection or to override the subscription id defined in a Subscription scoped service connection
+                    backendAzureRmSubscriptionId: '714bac87-66c7-4f7b-baf9'
+                    # create backend storage account if doesn't exist
+                    ensureBackend: true
+                    backendAzureRmResourceGroupName: 'RGinfra-platform-rg-prod11'
+                    # azure location shortname of the backend resource group and storage account
+                    backendAzureRmResourceGroupLocation: 'uksouth'
+                    backendAzureRmStorageAccountName: 'infratfstate12'
+                    # azure storage account sku, used when creating the storage account
+                    backendAzureRmStorageAccountSku: 'Standard_LRS'
+                    # azure blob container to store the state file
+                    backendAzureRmContainerName: 'tfstate'
+                    # azure blob file name
+                    backendAzureRmKey: kv.tfstate
+                    workingDirectory: $(System.DefaultWorkingDirectory)/TerraformPractices/
+
+                - task: TerraformCLI@0
+                  displayName: 'KV terraform plan'
+                  inputs:
+                    command: plan
+                    environmentServiceName: '27_11:30_batch'
+                    workingDirectory: $(System.DefaultWorkingDirectory)/TerraformPractices/
+
+
+                - task: TerraformCLI@0
+                  displayName: 'KV terraform apply'
+                  #condition: and(succeeded(), eq(variables['TERRAFORM_PLAN_HAS_CHANGES'], 'false'))
+                  inputs:
+                    command: apply
+                    environmentServiceName: '27_11:30_batch'
+                    workingDirectory: $(System.DefaultWorkingDirectory)/TerraformPractices/

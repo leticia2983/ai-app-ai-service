@@ -1,0 +1,21 @@
+parameters:
+  - name: tag
+    type: string
+
+  - name: env
+    type: string
+  
+  - name: type
+    type: string
+
+stages:
+  - ${{ if ne(parameters.type, 'rabbitmq') }}:
+    - template: ..\..\stages\applications\build-ai.yml
+      parameters:
+        type: ${{ parameters.type }}
+
+  - template: ..\..\stages\applications\deployaks.yml
+    parameters:
+      tag: ${{ parameters.tag }}
+      env: ${{ parameters.env }}
+      type: ${{ parameters.type }}

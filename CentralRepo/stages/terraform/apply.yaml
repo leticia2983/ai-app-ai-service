@@ -1,0 +1,47 @@
+stages:
+  - stage: terraform_apply
+    jobs:
+          - job: apply
+            displayName: 'terraform apply'
+            steps:
+              - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+                displayName: 'Install Terraform'
+                inputs:
+                  terraformVersion: "1.7.5"
+              - task: TerraformCLI@0
+                displayName: 'terraform init'
+                inputs:
+                  command: init
+                  backendType: azurerm
+                  # Service connection to authorize backend access. Supports Subscription & Management Group Scope
+                  backendServiceArm: 'terra_beginner_svc'
+                  # Subscription id of the target backend. This can be used to specify the subscription when using Management Group scoped
+                  # Service connection or to override the subscription id defined in a Subscription scoped service connection
+                  backendAzureRmSubscriptionId: '714bac87-66c7-4f7b-baf9-52b5580e583c'
+                  # create backend storage account if doesn't exist
+                  ensureBackend: true
+                  backendAzureRmResourceGroupName: 'RGinfra-platform-rg-prod11'
+                  # azure location shortname of the backend resource group and storage account
+                  backendAzureRmResourceGroupLocation: 'uksouth'
+                  backendAzureRmStorageAccountName: 'infratfstate12'
+                  # azure storage account sku, used when creating the storage account
+                  backendAzureRmStorageAccountSku: 'Standard_LRS'
+                  # azure blob container to store the state file
+                  backendAzureRmContainerName: 'mytfstate12'
+                  # azure blob file name
+                  backendAzureRmKey: myinfrax12.tfstate
+#                  workingDirectory: 'terraform'
+
+              - download: current
+                artifact: 'tfplan'
+                name: downloadPlanfolder
+
+              - task: TerraformCLI@0
+                displayName: 'terraform apply'
+                #            condition: and(succeeded(), eq(variables['TERRAFORM_PLAN_HAS_CHANGES'], 'true'))
+                inputs:
+                  command: apply
+                  environmentServiceName: 'terra_beginner_svc'
+                  # commandOptions: '$(Pipeline.Workspace)/tfplan/terraform.tfplan'
+#                  workingDirectory: 'terraform'
+                  allowTelemetryCollection: true

@@ -1,0 +1,10 @@
+variables:
+  arm_service_connection: 'ARMServiceconnection'
+  key_vault_name: 'kvbademo'
+  user_pass: 'username,password'
+  acr_name: 'acrbr12345'
+  helm_chart: 'helm/helm/javahelmchart:v1'
+  azureRGroup: 'K8s'
+  aksclustername: 'aks-cli'
+  aksnamespace: 'ba-namespace'
+  kubernetesServiceConnection: 'k8sconnection'

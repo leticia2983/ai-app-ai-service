@@ -1,0 +1,66 @@
+stages:
+  - stage: 'Build_RG_with_terraform'
+    displayName: 'Terraform Plan'
+    jobs:
+      - job: plan
+        displayName: 'Install terraform on agent'
+        steps:
+          - task: charleszipp.azure-pipelines-tasks-terraform.azure-pipelines-tasks-terraform-installer.TerraformInstaller@0
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: "1.7.5"
+
+          - task: TerraformCLI@0
+            displayName: 'terraform init'
+            inputs:
+              command: init
+              backendType: azurerm
+              # Service connection to authorize backend access. Supports Subscription & Management Group Scope
+              backendServiceArm: 'tf'
+              # Subscription id of the target backend. This can be used to specify the subscription when using Management Group scoped
+              # Service connection or to override the subscription id defined in a Subscription scoped service connection
+              backendAzureRmSubscriptionId: '714bac87-66c7-4f7b-baf9-52b5580e583c'
+              # create backend storage account if doesn't exist
+              ensureBackend: true
+              backendAzureRmResourceGroupName: 'RGinfra-platform-rg-prod11'
+              # azure location shortname of the backend resource group and storage account
+              backendAzureRmResourceGroupLocation: 'uksouth'
+              backendAzureRmStorageAccountName: 'infratfstate12'
+              # azure storage account sku, used when creating the storage account
+              backendAzureRmStorageAccountSku: 'Standard_LRS'
+              # azure blob container to store the state file
+              backendAzureRmContainerName: 'mytfstate12'
+              # azure blob file name
+              backendAzureRmKey: myinfrax12.tfstate
+#              workingDirectory: 'terraform'
+
+
+
+          - task: TerraformCLI@0
+            displayName: 'Run terraform validate'
+            inputs:
+              command: validate
+#              workingDirectory: 'terraform'
+
+
+
+          - task: TerraformCLI@0
+            displayName: 'terraform plan'
+            inputs:
+              command: plan
+              environmentServiceName: 'tf'
+#              workingDirectory: 'terraform'
+              commandOptions: '-out=$(System.DefaultWorkingDirectory)/terraform.tfplan'
+              publishPlanResults: 'infra_plan'
+          
+          # Publish Pipeline Artifacts v1
+          # Publish (upload) a file or directory as a named artifact for the current run.
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: '$(System.DefaultWorkingDirectory)/terraform.tfplan' # string. Alias: path. Required. File or directory path. Default: $(Pipeline.Workspace).
+              artifact: 'tfplan' # string. Alias: artifactName. Artifact name. 
+              publishLocation: 'pipeline' # 'pipeline' | 'filepath'. Alias: artifactType. Required. Artifact publish location. Default: pipeline.
+              #fileSharePath: # string. Required when artifactType = filepath. File share path. 
+              #parallel: false # boolean. Optional. Use when artifactType = filepath. Parallel copy. Default: false.
+              #parallelCount: '8' # string. Optional. Use when artifactType = filepath && parallel = true. Parallel count. Default: 8.
+              #properties: # string. Custom properties. 

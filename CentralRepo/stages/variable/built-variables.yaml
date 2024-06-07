@@ -1,0 +1,4 @@
+variables:
+  acr_image_repository: 'ba-backend'
+  service_connection_acr: 'ACRServiceconnection'
+  acr_front_image_repository: 'ba-frontend'

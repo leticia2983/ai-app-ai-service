@@ -1,0 +1,67 @@
+stages:
+  - stage: test
+    displayName: 'NewMan tests'
+    variables:
+      - template: ../variable/built-variables.yaml
+      - template: ../variable/deploy-variables.yaml
+    jobs:
+      - job: testJob
+        displayName: PostMan tests
+        pool:
+          vmImage: ubuntu-latest
+        container: beginneracademy/azdoagent:1.4
+        steps:
+          - task: NodeTool@0
+            inputs:
+                versionSpec: '18.x'
+            displayName: 'Install Node.js'
+
+          # - script: |
+          #       npm install
+          #   displayName: 'npm install and build'
+
+          - script: |
+              npm install -g newman newman-reporter-htmlextra
+            displayName: 'Install Newman and Html reporter'
+
+          - script: newman run $(System.DefaultWorkingDirectory)/3-tier.postman_collection.json --reporters cli,junit --reporter-junit-export $(System.DefaultWorkingDirectory)/results/junitReport.xml
+            displayName: 'Run API Test'
+            continueOnError: true
+
+          # - task: NewmanPostman@4
+          #   displayName: 'Newman - Postman'
+          #   inputs:
+          #       collectionFileSource: '$(System.DefaultWorkingDirectory)/3-tier.postman_collection.json'
+          #       environmentSourceType: none
+          #       ignoreRedirect: false
+          #       bail: false
+          #       sslInsecure: false
+          #       htmlExtraDarkTheme: true
+          #       htmlExtraLogs: false
+          #       htmlExtraTestPaging: false
+
+          - script: |
+                ls -lrta results
+                pwd
+            displayName: 'ls'
+
+          # - task: PublishBuildArtifacts@1
+          #   inputs:
+          #     pathToPublish: $(System.DefaultWorkingDirectory)/newman/*
+          #     artifactName: HtmlReport
+
+          - task: PublishTestResults@2
+            displayName: 'Publish HTML Report'
+            inputs:
+                # PathtoPublish: '$(System.DefaultWorkingDirectory)/results/*'
+                testResultsFiles: '$(System.DefaultWorkingDirectory)/results/*.xml'
+                ArtifactName: 'Report'
+
+        #   - script: |
+        #         npm install -g newman@4.6.1
+        #         workingDirectory: '$(System.DefaultWorkingDirectory)'
+        #         ls -lrta $(System.DefaultWorkingDirectory)/
+        #     displayName: 'Command Line Script'
+                
+
+      

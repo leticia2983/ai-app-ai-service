@@ -1,0 +1,8 @@
+parameters:
+  - name: tag
+    type: string
+stages:
+  - template: ..\stages\helmpush.yml
+    parameters:
+      tag: ${{ parameters.tag }}
+

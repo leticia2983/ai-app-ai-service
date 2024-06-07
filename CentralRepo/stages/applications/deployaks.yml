@@ -1,0 +1,41 @@
+parameters:
+  - name: tag
+    type: string
+  - name: env
+    type: string
+  - name: type
+    type: string
+stages:
+  - stage: Deployment_dev
+    displayName: 'Deployment to dev'
+    variables:
+      - template: ../variable/deploy-variables.yaml
+    jobs:
+      - deployment: helm_publish_dev_aks
+        displayName: deploy to dev aks
+        environment:
+          name: dev
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: HelmInstaller@0
+                  inputs:
+                    helmVersion: 3.6.2
+                    checkLatestHelmVersion: false
+                    kubectlVersion: 1.24.9
+                    checkLatestKubectl: false
+
+                - task: HelmDeploy@0
+                  displayName: deploy chart to aks
+                  inputs:
+                    connectionType: 'Kubernetes Service Connection'
+                    kubernetesServiceEndpoint: "${{ variables.kubernetesServiceConnection }}"
+                    kubernetesCluster: "${{ variables.aksclustername }}"
+                    namespace: "${{ variables.aksnamespace }}"
+                    command: 'upgrade'
+                    chartType: 'FilePath'
+                    chartPath: '$(System.DefaultWorkingDirectory)'
+                    releaseName: "${{ parameters.type }}"
+                    arguments: '--create-namespace --install -f values-${{ parameters.env }}.yaml' # --set image.tag=${{ parameters.tag }}

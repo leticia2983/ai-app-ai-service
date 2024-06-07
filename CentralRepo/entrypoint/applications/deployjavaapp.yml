@@ -1,0 +1,17 @@
+parameters:
+  - name: tag
+    type: string
+  - name: env
+    type: string
+stages:
+  - template: ..\..\stages\applications\build.yml
+    parameters:
+      tag: ${{ parameters.tag }}
+#  - template: ..\..\stages\applications\helmpush.yml
+  - template: ..\..\stages\applications\deployaks.yml
+    parameters:
+      tag: ${{ parameters.tag }}
+      env: ${{ parameters.env }}
+      type: "backend"
+    
+  - template: ..\..\stages\applications\tests.yml

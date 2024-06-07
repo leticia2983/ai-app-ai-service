@@ -1,0 +1,14 @@
+parameters:
+  - name: tag
+    type: string
+  - name: env
+    type: string
+stages:
+  - template: ..\..\stages\applications\buildreact.yml
+    parameters:
+      tag: ${{ parameters.tag }}
+  - template: ..\..\stages\applications\deployaks.yml
+    parameters:
+      tag: ${{ parameters.tag }}
+      env: ${{ parameters.env }}
+      type: "frontend"

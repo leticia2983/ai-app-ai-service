@@ -1,0 +1,49 @@
+parameters:
+  - name: tag
+    type: string
+stages:
+  - stage: BuildImage
+    displayName: 'AKS Build & Push to ACR'
+    variables:
+      - template: ../variable/built-variables.yaml
+      - template: ../variable/deploy-variables.yaml
+    jobs:
+      - job: BuildImage
+        displayName: BuildImage
+        pool:
+          vmImage: ubuntu-latest
+        container: beginneracademy/azdoagent:1.4
+        steps:
+          - bash: |
+              echo "deployment boolean value is" ${{ variables.deployment }}
+              ls -lrt $(System.DefaultWorkingDirectory)/target/
+              echo JAVA_HOME is $JAVA_HOME
+              java --version
+            name: "key_Value_boolean"
+
+          - task: Maven@3
+            inputs:
+              mavenPomFile: 'pom.xml'
+              mavenOptions: '-Xmx3072m'
+              javaHomeOption: 'JDKVersion'
+              jdkDirectory: '/usr/local/openjdk-20'
+              publishJUnitResults: false
+              mavenAuthenticateFeed: true
+              effectivePomSkip: true
+              goals: 'package -Dmaven.test.skip=true'
+
+
+          - task: Docker@2
+            displayName: Login to ACR
+            inputs:
+              command: login
+              containerRegistry: "acr"
+
+          - task: Docker@2
+            displayName: Build and Push
+            inputs:
+              command: buildAndPush
+              repository: "${{ variables.acr_image_repository }}"  # username/contosoRepository for DockerHub
+              tags: "latest"
+
+

@@ -1,0 +1,16 @@
+stages:
+  - stage: Validation
+    displayName: 'Validation of terraform plan'
+    jobs:
+      - job: waitForValidation
+        displayName: Please check for terraform plan
+        pool: server
+        timeoutInMinutes: 20 # job times out in 3 days
+        steps:
+          - task: ManualValidation@0
+            timeoutInMinutes: 20 # task times out in 1 day
+            inputs:
+              notifyUsers: |
+                nevillegoa@gmail.com
+                neville_ba@outlook.com
+              instructions: 'Please validate the Terraform Plan and if you are ok then resume'

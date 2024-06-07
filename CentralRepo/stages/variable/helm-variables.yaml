@@ -1,0 +1,6 @@
+variables:
+  acr_service_connection: 'ACRServiceconnection'
+  acr_name: 'acrbr12345'
+  helm_chart_name: 'mysqlhelmchartba'
+  helm_chart_name_for_acr: 'helm/javahelmchart:v1'
+  azureRGroup: 'K8s'

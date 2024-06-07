@@ -1,0 +1,42 @@
+stages:
+  - stage: Helm_push_saveToACR
+    displayName: 'Helm-push to ACR'
+    variables:
+      - template: ../variable/helm-variables.yaml
+    jobs:
+      - job: Helm_push_saveToACR
+        displayName: Helm_push_saveToACR
+        steps:
+          - task: Docker@2
+            displayName: Login to ACR
+            inputs:
+              command: login
+              containerRegistry: "acr"
+
+          - task: HelmInstaller@0
+            inputs:
+              helmVersion: 3.6.2
+              checkLatestHelmVersion: false
+              kubectlVersion: 1.24.9
+              checkLatestKubectl: false
+
+          - bash: |
+              export HELM_EXPERIMENTAL_OCI=1
+
+          - task: HelmDeploy@0
+            displayName: Helm package
+            inputs:
+              command: package
+              destination: $(Build.ArtifactStagingDirectory)
+
+          - task: HelmDeploy@0
+            displayName: Helm save
+            inputs:
+              command: save
+              azureSubscriptionEndpoint: "arm"
+              chartNameForACR: "${{ variables.helm_chart_name_for_acr }}"
+              chartPathForACR: "$(Build.ArtifactStagingDirectory)/backend-0.1.0.tgz"
+              azureSubscriptionForACR: "714bac87-66c7-4f7b-baf9-52b5580e583c"
+              azureSubscriptionEndpointForACR: "arm"
+              azureResourceGroupForACR: "ba"
+              azureContainerRegistry: "${{ variables.acr_name }}.azurecr.io"
